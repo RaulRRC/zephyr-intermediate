@@ -1,74 +1,104 @@
+//Based from L2 Demo 2: Mutex Protection https://github.com/iomico-public/zephyr-intermediate/blob/l2-demo2/app/src/main.c
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(demo, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(l2task1, LOG_LEVEL_DBG);
 
-#define STACK_SIZE 1024
+#define STACK_SIZE      1024
+#define PRIOA            5
+#define PRIOB            10
+#define INCREMENTS      1000000   /* each thread increments this many times */
 
-#define PRIO_A 7
-#define PRIO_C 5
-#define PRIO_B 3
-#define PRIO_Cooperative (-1)
+/* Shared state - intentionally unprotected */
+static volatile uint32_t counter, counter2;
 
-void t_Cooperative_fn(void *p1, void *p2, void *p3)
+
+static struct k_sem done_sem;
+
+static K_MUTEX_DEFINE(counter_mutex);
+
+void worker_fn_WithoutMutex(void *p1, void *p2, void *p3)
 {
-    LOG_INF("[COOPERATIVE THREAD] Starting cooperative thread - will run 5 steps and then yield to other threads");
-    for(int i=0; i<5; i++) {
-        k_busy_wait(40000);
-        LOG_INF("[COOP] step %d/5 - still holding CPU tick=%u", i+1, k_uptime_get_32());
-    };
-    LOG_INF("[COOPERATIVE THREAD] Finished cooperative thread - yielding to other threads");
-    k_yield();
-    LOG_INF("[COOPERATIVE THREAD] Done");
-}
+    const char *name = k_thread_name_get(k_current_get());
 
-void t_low_fn(void *p1, void *p2, void *p3)
-{
-    LOG_INF("[LOW THREAD] started");
-    for(int i=0; i<8; i++) {
-        LOG_INF("[LOW] step %d/8 tick=%u", i+1, k_uptime_get_32());
-        k_msleep(300);
+    for (int i = 0; i < INCREMENTS; i++) {
+        uint32_t tmp = counter;
+        k_yield();
+        counter = tmp + 1;
     }
-    LOG_INF("[LOW THREAD] Done");
+    LOG_INF("[%s] finished", name);
+    k_sem_give(&done_sem);
 }
 
-void t_med_fn(void *p1, void *p2, void *p3)
+void worker_fn_WithMutex(void *p1, void *p2, void *p3)
 {
-    LOG_INF("[MEDIUM THREAD] started"); 
-    for(int i=0; i<8; i++) {
-        LOG_INF("[MEDIUM] step %d/8 tick=%u", i+1, k_uptime_get_32());  
-        k_msleep(200);
+    const char *name = k_thread_name_get(k_current_get());
+
+    for (int i = 0; i < INCREMENTS; i++) {
+        k_mutex_lock(&counter_mutex, K_FOREVER);
+        uint32_t tmp = counter2;
+        k_yield();
+        counter2 = tmp + 1;
+        k_mutex_unlock(&counter_mutex);
     }
-    LOG_INF("[MEDIUM THREAD] Done");
+
+    LOG_INF("[%s] finished", name);
+    k_sem_give(&done_sem);
 }
 
-void t_high_fn(void *p1, void *p2, void *p3)
-{
-    LOG_INF("[HIGH THREAD] Starting high priority thread - will preempt LOW whenever Ready");
-    for(int i=0; i<8; i++) {
-        LOG_INF("[HIGH] step %d/8 tick=%u", i+1, k_uptime_get_32());
-        k_msleep(100);
-    }
-    LOG_INF("[HIGH THREAD] Done");
-}
-
-K_THREAD_DEFINE(thread_a, STACK_SIZE, t_low_fn,
-                NULL, NULL, NULL, PRIO_A, 0, 0);
-K_THREAD_DEFINE(thread_b, STACK_SIZE, t_high_fn,
-                NULL, NULL, NULL, PRIO_B, 0, 0);
-K_THREAD_DEFINE(thread_c, STACK_SIZE, t_med_fn,
-                NULL, NULL, NULL, PRIO_C, 0, 0);
-K_THREAD_DEFINE(thread_d, STACK_SIZE, t_Cooperative_fn,
-                NULL, NULL, NULL, PRIO_Cooperative, 0, 0);                
+K_THREAD_DEFINE(worker_a, STACK_SIZE, worker_fn_WithoutMutex, NULL, NULL, NULL,
+                PRIOA, 0, 0);
+K_THREAD_DEFINE(worker_b, STACK_SIZE, worker_fn_WithoutMutex, NULL, NULL, NULL,
+                PRIOA, 0, 0);
+                
+K_THREAD_DEFINE(worker_c, STACK_SIZE, worker_fn_WithMutex, NULL, NULL, NULL,
+                PRIOB, 0, 5000);
+K_THREAD_DEFINE(worker_d, STACK_SIZE, worker_fn_WithMutex, NULL, NULL, NULL,
+                PRIOB, 0, 5000);
 
 int main(void)
 {
-    LOG_INF("Zephyr Intermediate Demo - Cooperative Threading");
-    LOG_INF("Thread A: LOW priority %d", PRIO_A);
-    LOG_INF("Thread B: HIGH priority %d", PRIO_B);
-    LOG_INF("Thread C: MEDIUM priority %d", PRIO_C);
-    LOG_INF("Thread D: COOPERATIVE priority %d", PRIO_Cooperative);
+    k_sem_init(&done_sem, 0, 2);
+    int64_t time = k_uptime_get();
+
+    LOG_INF("Assigment without Mutex Protection: Expected race condition ===");
+    LOG_INF("Expected final value: %d", INCREMENTS * 2);
+
+    /* Wait for both workers to complete */
+    k_sem_take(&done_sem, K_FOREVER);
+    k_sem_take(&done_sem, K_FOREVER);
+
+    LOG_INF("Actual  final value: %u", counter);
+
+    if (counter == INCREMENTS * 2) {
+        LOG_WRN("No race this run");
+    } else {
+        LOG_ERR("Race condition confirmed: lost %d updates",
+                (INCREMENTS * 2) - counter);
+    }
+    LOG_INF("Execution time: %lld ms", k_uptime_delta(&time));
+
+    /* Reset counter and Enable Mutex for the next test */
+
+    int64_t time2 = k_uptime_get();
+
+    LOG_INF("Assigment with Mutex Protection: Expected no race condition ===");
+    LOG_INF("Expected final value: %d", INCREMENTS * 2);
+
+    // /* Wait for both workers to complete */
+    k_sem_take(&done_sem, K_FOREVER);
+    k_sem_take(&done_sem, K_FOREVER);
+
+    LOG_INF("Actual  final value: %u", counter2);
+
+    if (counter2 == INCREMENTS * 2) {
+        LOG_WRN("No race this run");
+    } else {
+        LOG_ERR("Race condition confirmed: lost %d updates",
+                (INCREMENTS * 2) - counter2);
+    }
+    LOG_INF("Execution time: %lld ms", k_uptime_delta(&time2));
+
 
     return 0;
 }
-
