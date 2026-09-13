@@ -1,3 +1,4 @@
 {
-    "terminal.integrated.stickyScroll.enabled": false
+    "terminal.integrated.stickyScroll.enabled": false,
+    "cmake.sourceDirectory": "C:/Users/rrive/Desktop/Zephyr_project/IOMICO_Assigments_Intermediate/zephyr-intermediate/app"
 }

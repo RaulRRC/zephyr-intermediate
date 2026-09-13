@@ -76,6 +76,7 @@ static void display_listener_cb(const struct zbus_channel *chan)
 /*  Publisher                                                         */
 /* ================================================================== */
 
+
 static void sensor_thread_fn(void *p1, void *p2, void *p3)
 {
     ARG_UNUSED(p1); ARG_UNUSED(p2); ARG_UNUSED(p3);
