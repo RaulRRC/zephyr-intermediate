@@ -1,0 +1,9 @@
+&lpuart0 {
+    status = "okay";
+};
+
+/ {
+    chosen {
+        zephyr,tracing-uart = &lpuart0; /* replace with the actual UART node label on your board */
+    };
+};

@@ -5,10 +5,11 @@
 LOG_MODULE_REGISTER(homework, LOG_LEVEL_INF);
 
 #define STACK_SIZE            2048
-#define CONTROL_PRIORITY         7
-#define MAINTENANCE_PRIORITY     4
+#define CONTROL_PRIORITY         4
+#define MAINTENANCE_PRIORITY     7
 #define EVENT_PERIOD_MS        250
 #define MAINTENANCE_LOAD_US  45000
+#define DEADLINE_MS             15
 
 struct control_event {
     uint32_t seq;
@@ -35,6 +36,8 @@ static void event_timer_expiry(struct k_timer *timer)
     /* Timer expiry runs in interrupt context, so never wait here. */
     int ret = k_msgq_put(&control_queue, &event, K_NO_WAIT);
 
+    sys_trace_named_event("event_ready", event.seq, k_msgq_num_used_get(&control_queue));
+
     if (ret != 0) {
         return;
     }
@@ -43,6 +46,7 @@ static void event_timer_expiry(struct k_timer *timer)
     k_sem_give(&maintenance_start);
 
     /* TODO: Add an application trace event for this sequence. */
+
 }
 
 K_TIMER_DEFINE(event_timer, event_timer_expiry, NULL);
@@ -55,21 +59,37 @@ static void control_fn(void *p1, void *p2, void *p3)
 {
     ARG_UNUSED(p1); ARG_UNUSED(p2); ARG_UNUSED(p3);
 
+    uint32_t deadline_misses = 0;
+
     while (true) {
         struct control_event event;
         int ret = k_msgq_get(&control_queue, &event, K_FOREVER);
+
 
         if (ret != 0) {
             LOG_ERR("[CONTROL] receive failed: %d", ret);
             continue;
         }
 
+        uint32_t latency_ms = k_uptime_get_32() - event.ready_ms;
+
+        sys_trace_named_event("Control_done", event.seq, latency_ms);
+
+        if (latency_ms > DEADLINE_MS) {
+            deadline_misses++;
+            LOG_WRN_RATELIMIT("[CONTROL] deadline_miss count=%u seq=%u latency=%ums",
+                    deadline_misses, event.seq, latency_ms);
+        } else {
+            LOG_INF("[CONTROL] event_done seq=%u latency=%ums",
+                    event.seq, latency_ms);
+        }
+
         LOG_INF("[CONTROL] processed seq=%u", event.seq);
 
-        /* TODO: Define a response-time guarantee. */
-        /* TODO: Measure latency and count every deadline miss. */
-        /* TODO: Rate-limit repeated warning messages. */
-        /* TODO: Add an application trace event for completion. */
+        /* TODO: Define a response-time guarantee. (Definir un deadline) */
+        /* TODO: Measure latency and count every deadline miss. (Se calcula el timing y se cuenta los misses)*/
+        /* TODO: Rate-limit repeated warning messages. (Se emite el mensaje con limite y se configura el prj.conf)*/
+        /* TODO: Add an application trace event for completion. (Se agrego)*/
     }
 }
 
@@ -85,9 +105,12 @@ static void maintenance_fn(void *p1, void *p2, void *p3)
         k_sem_take(&maintenance_start, K_FOREVER);
 
         /* This work is important, but it has no short deadline. */
+        /*Se cambia la prioridad del maintenance con el control (El maintenance se ejecuta pero no preempts la funcion de control)*/
         k_busy_wait(MAINTENANCE_LOAD_US);
     }
 }
+
+/*Definicion de threads*/
 
 K_THREAD_DEFINE(control, STACK_SIZE, control_fn,
                 NULL, NULL, NULL, CONTROL_PRIORITY, 0, 0);
@@ -95,6 +118,7 @@ K_THREAD_DEFINE(control, STACK_SIZE, control_fn,
 K_THREAD_DEFINE(maintenance, STACK_SIZE, maintenance_fn,
                 NULL, NULL, NULL, MAINTENANCE_PRIORITY, 0, 0);
 
+/*Main Code*/
 int main(void)
 {
     LOG_INF("=== L6 Homework: Runtime Investigation ===");
