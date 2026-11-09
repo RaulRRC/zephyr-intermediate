@@ -6,3 +6,10 @@ build
 deps
 project_layout.txt
 .cache
+
+#zephyr
+bootloader/
+doc/
+modules/
+tools/
+zephyr/

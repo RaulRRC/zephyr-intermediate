@@ -1,0 +1,2 @@
+# Load Sysbuild board Kconfig descriptions.
+osource "/home/raul/iomico_inter/zephyr-intermediate/zephyr/boards/native/native_sim/Kconfig.sysbuild"

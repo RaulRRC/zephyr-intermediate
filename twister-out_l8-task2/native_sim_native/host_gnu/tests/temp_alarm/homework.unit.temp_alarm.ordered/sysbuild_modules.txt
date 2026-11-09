@@ -1,0 +1,1 @@
+"mcuboot":"/home/raul/iomico_inter/zephyr-intermediate/bootloader/mcuboot":"/home/raul/iomico_inter/zephyr-intermediate/bootloader/mcuboot/boot/zephyr/sysbuild"

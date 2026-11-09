@@ -1,0 +1,59 @@
+cmake:
+  application:
+    configuration-dir: '/home/raul/iomico_inter/zephyr-intermediate/tests/temp_alarm'
+    source-dir: '/home/raul/iomico_inter/zephyr-intermediate/tests/temp_alarm'
+  board:
+    name: 'native_sim'
+    path:
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/boards/native/native_sim'
+    qualifiers: 'native'
+    revision: ''
+  devicetree:
+    bindings-dirs:
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/bindings'
+    files:
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/boards/native/native_sim/native_sim.dts'
+    include-dirs:
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/ambiq/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/atmel/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/bouffalolab/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/bouffalolab/include/zephyr'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/gigadevice/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/microchip/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/microchip/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/nuvoton/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/nxp/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/stm32/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/modules/hal/ti/dts'
+     - '/home/raul/iomico_inter/zephyr-intermediate/tests/temp_alarm/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/include'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/include/zephyr'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/common'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/vendor'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/rx'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/x86'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/xtensa'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/sparc'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/riscv'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/posix'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/arm64'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/arm'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts/arc'
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/dts'
+  kconfig:
+    extra-user-files:
+     - '/home/raul/iomico_inter/zephyr-intermediate/twister-out/native_sim_native/host_gnu/tests/temp_alarm/homework.unit.temp_alarm/twister/testsuite_extra.conf'
+    files:
+     - '/home/raul/iomico_inter/zephyr-intermediate/zephyr/boards/native/native_sim/native_sim_defconfig'
+     - '/home/raul/iomico_inter/zephyr-intermediate/tests/temp_alarm/prj.conf'
+     - '/home/raul/iomico_inter/zephyr-intermediate/twister-out/native_sim_native/host_gnu/tests/temp_alarm/homework.unit.temp_alarm/twister/testsuite_extra.conf'
+     - '/home/raul/iomico_inter/zephyr-intermediate/twister-out/native_sim_native/host_gnu/tests/temp_alarm/homework.unit.temp_alarm/zephyr/misc/generated/extra_kconfig_options.conf'
+    user-files:
+     - '/home/raul/iomico_inter/zephyr-intermediate/tests/temp_alarm/prj.conf'
+  toolchain:
+    name: 'host'
+    path: ''
+  zephyr:
+    version: '4.4.0'
+    zephyr-base: '/home/raul/iomico_inter/zephyr-intermediate/zephyr'
+version: '0.1.0'
