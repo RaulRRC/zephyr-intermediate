@@ -126,7 +126,7 @@ ZTEST(temp_alarm_invalid_input, test_init_without_device)
 	/* TODO(l8-task2): init without a sensor device is rejected.
 	 * See TEST_SPEC.md "Suite temp_alarm_invalid_input" #2.
 	 */
-	zassert_equal(temp_alarm_init(NULL, DEFAULT_THRESHOLD), -EINVAL,
+	zassert_equal(temp_alarm_init(NULL, DEFAULT_THRESHOLD), -ENODEV,
 		      "NULL device must be rejected");
 }
 
