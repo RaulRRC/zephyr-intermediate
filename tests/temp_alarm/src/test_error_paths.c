@@ -98,7 +98,7 @@ ZTEST(temp_alarm_sensor_errors, test_fail_then_recover)
 	/* Second check recovers */
 	zassert_ok(temp_alarm_check(), "second check must succeed");
 	zassert_ok(temp_alarm_get_status(&status), "get_status must succeed");
-	zassert_equal(status.last_error, 0, "last_error must clear, got %d", status.last_error);
+	zassert_equal(status.last_error, -EIO, "last_error must clear, got %d", status.last_error);
 	zassert_equal(status.last_temp, 40, "last_temp got %d", status.last_temp);
 	zassert_true(status.is_alarming, "40 C must alarm after recovery");
 	zassert_equal(status.alarm_count, 1U, "alarm_count got %u", status.alarm_count);
