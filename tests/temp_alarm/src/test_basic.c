@@ -177,19 +177,22 @@ ZTEST(temp_alarm_reset, test_reset_clears_state)
 	 */
 	struct temp_alarm_status status;
 
-	
+	sensor_fake_set_temperature(40);
 	for (int i = 0; i < 3; i++) {
-		sensor_fake_set_temperature(20);
-		zassert_false(status.is_alarming, "reading == threshold must not alarm");
-		sensor_fake_set_temperature(40);
-		zassert_ok(temp_alarm_check(), "check %d must succeed", i);		
+		zassert_ok(temp_alarm_check(), "check %d must succeed", i);
 	}
+
+	/* Precondition: the alarm really was raised three times */
+	zassert_ok(temp_alarm_get_status(&status), "get_status must succeed");
+	zassert_true(status.is_alarming, "precondition: alarm raised");
+	zassert_equal(status.alarm_count, 3U, "precondition: alarm_count got %u",
+		      status.alarm_count);
 
 	temp_alarm_reset();
 	zassert_ok(temp_alarm_get_status(&status), "get_status must succeed");
+
 	zassert_false(status.is_alarming, "reset must clear alarm");
 	zassert_equal(status.alarm_count, 0U, "alarm_count got %u", status.alarm_count);
 	zassert_equal(status.last_temp, 40, "reset must keep last reading, got %d",
-		      status.last_temp);	
-	
+		      status.last_temp);
 }
