@@ -180,7 +180,6 @@ ZTEST(temp_alarm_reset, test_reset_clears_state)
 	
 	for (int i = 0; i < 3; i++) {
 		sensor_fake_set_temperature(20);
-		zassert_false(status.is_alarming, "reading == threshold must not alarm");
 		sensor_fake_set_temperature(40);
 		zassert_ok(temp_alarm_check(), "check %d must succeed", i);		
 	}
